@@ -2,6 +2,7 @@ package org.katas.refactoring;
 
 import com.sun.org.apache.xpath.internal.operations.Or;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +13,6 @@ import java.util.List;
  * total sales tax) and prints it.
  */
 public class OrderReceipt {
-    private final static Double RATE = .10;
     private Order order;
 
     public OrderReceipt(Order order) {
@@ -20,58 +20,37 @@ public class OrderReceipt {
     }
 
     public String printReceipt() {
-        StringBuilder output = new StringBuilder();
+        final String customerName = order.getCustomerName();
+        final String customerAddress = order.getCustomerAddress();
 
+        final double taxRate = .10;
+        final double totalSalesTax = getTotalAmount() * taxRate;
+        final double totalAmountWithTax = getTotalAmount() + getTotalSalesTx();
 
-        output.append("======Printing Orders======\n");
-
-        output.append(order.getCustomerName());
-        output.append(order.getCustomerAddress());
-
-
-        double totSalesTx = printLineItems(order, output).get(0);
-        double tot = printLineItems(order, output).get(1);
-
-
-        output.append("Sales Tax").append('\t').append(totSalesTx);
-
-
-        output.append("Total Amount").append('\t').append(tot);
-        return output.toString();
+        return print(customerName, customerAddress, getLineItemsAsString(), totalSalesTax, totalAmountWithTax);
     }
 
-    public List<Double> printLineItems(Order order, StringBuilder output) {
-        List<Double> list = new ArrayList<>();
-        double totSalesTx = 0;
-        double tot = 0;
-        for (LineItem lineItem : order.getLineItems()) {
-            appendLineItem(output, lineItem);
-            double salesTax = getSalesTax(lineItem);
-            totSalesTx = getTot(totSalesTx, salesTax);
-            tot = getTot(tot, lineItem.totalAmount() + salesTax);
-        }
-        list.add(totSalesTx);
-        list.add(tot);
-        return list;
+    private String print(String customerName, String customerAddress, String lineItemsAsString, double totalSalesTax, double totalAmount){
+        return MessageFormat.format("======Printing Orders======\n {0} {1} {2}\nSales Tax\t{3}Total Amount\t{4}",
+                customerName,
+                customerAddress,
+                lineItemsAsString,
+                totalSalesTax,
+                totalAmount);
     }
 
-    private void appendLineItem(StringBuilder output, LineItem lineItem) {
-        output.append(lineItem.getDescription());
-        output.append('\t');
-        output.append(lineItem.getPrice());
-        output.append('\t');
-        output.append(lineItem.getQuantity());
-        output.append('\t');
-        output.append(lineItem.totalAmount());
-        output.append('\n');
+    private double getTotalAmount(){
+        return order.getLineItems().stream().mapToDouble(LineItem::totalAmount).sum();
     }
 
-    private double getSalesTax(LineItem lineItem) {
-        return lineItem.totalAmount() * RATE;
+    private String getLineItemsAsString(){
+        String lineItemsFormat = "%s\t%.1f\t%d\t%.1f";
+        return order.getLineItems().stream().map(lineItem ->
+                String.format(lineItemsFormat,lineItem.getDescription(),lineItem.getPrice(),lineItem.getQuantity(),lineItem.totalAmount()))
+                .reduce("",(result,element)->result + element + "\n" );
     }
 
-    private double getTot(double tot, double v) {
-        tot += v;
-        return tot;
+    private double getTotalSalesTx() {
+        return order.getLineItems().stream().mapToDouble(x -> x.totalAmount() * .10).sum();
     }
 }
