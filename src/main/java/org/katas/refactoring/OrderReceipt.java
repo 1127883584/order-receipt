@@ -22,20 +22,20 @@ public class OrderReceipt {
     public String printReceipt() {
         StringBuilder output = new StringBuilder();
 
-        // print headers
+
         output.append("======Printing Orders======\n");
 
         output.append(order.getCustomerName());
         output.append(order.getCustomerAddress());
 
-        // print lineItems
+
         double totSalesTx = printLineItems(order, output).get(0);
         double tot = printLineItems(order, output).get(1);
 
-        // print the state tax
+
         output.append("Sales Tax").append('\t').append(totSalesTx);
 
-        // print total amount
+
         output.append("Total Amount").append('\t').append(tot);
         return output.toString();
     }
